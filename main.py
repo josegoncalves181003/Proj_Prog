@@ -41,19 +41,27 @@ class PassengerManager:
 
     def add_passenger(self):
         name = input("Nome do passageiro: ")
-        age = int(input("Idade do passageiro: "))
+        try:
+            age = int(input("Idade do passageiro: "))
+        except ValueError:
+            print("Idade inválida! Deve ser um número inteiro.\n")
+            return
         gender_choice = input("Gênero do passageiro (M/F/O): ").lower()
-        if gender_choice == 'm':
-            gender = 'Masculino'
-        elif gender_choice == 'f':
-            gender = 'Feminino'
-        elif gender_choice == 'o':
-            gender = 'Outro'
-        else:
-            print("Gênero inválido.\n")
+        gender_map = {
+            "m": "Masculino",
+            "f": "Feminino",
+            "o": "Outro"
+        }
+        gender = gender_map.get(gender_choice)
+        if not gender:
+            print("Gênero inválido! Deve ser 'M', 'F' ou 'O'.\n")
             return
         nationality = input("Nacionalidade do passageiro: ")
-        passport_number = input("Número do passaporte: ")
+        while True:
+            passport_number = input("Número do passaporte (8 ou 9 dígitos): ")
+            if passport_number.isdigit() and len(passport_number) in [8, 9]:
+                break
+            print("Número de passaporte inválido! Deve ter 8 ou 9 dígitos.")
         
         passenger = Passenger(self.id_counter, name, age, gender, nationality, passport_number)
         self.passengers.append(passenger)
@@ -70,44 +78,85 @@ class PassengerManager:
             print()
 
     def update_passenger(self):
-        passenger_id = int(input("ID do Passageiro para atualizar: "))
+        try:
+            passenger_id = int(input("ID do Passageiro para atualizar: "))
+        except ValueError:
+            print("ID inválido! Deve ser um número inteiro.\n")
+            return
+        passenger = self.find_passenger_by_id(passenger_id)
+
+        if passenger:
+            while True:
+                print("\n1. Atualizar nome")
+                print("2. Atualizar idade")
+                print("3. Atualizar gênero")
+                print("4. Atualizar nacionalidade")
+                print("5. Atualizar número do passaporte")
+                print("6. Concluir atualização")
+                choice = input("Escolha uma opção: ")
+                
+                if choice == "1":
+                    self.update_name(passenger)
+                elif choice == "2":
+                    self.update_age(passenger)
+                elif choice == "3":
+                    self.update_gender(passenger)
+                elif choice == "4":
+                    self.update_nationality(passenger)
+                elif choice == "5":
+                    self.update_passport_number(passenger)
+                elif choice == "6":
+                    print("Passageiro atualizado com sucesso!\n")
+                    return
+                else:
+                    print("Opção inválida!")
+        else:
+            print("Passageiro não encontrado.\n")
+
+    def find_passenger_by_id(self, passenger_id):
+        # Helper function to find passenger by ID
         for passenger in self.passengers:
             if passenger.passenger_id == passenger_id:
-                while True:
-                    print("\n1. Atualizar nome")
-                    print("2. Atualizar idade")
-                    print("3. Atualizar gênero")
-                    print("4. Atualizar nacionalidade")
-                    print("5. Atualizar número do passaporte")
-                    print("6. Concluir atualização")
-                    choice = input("Escolha uma opção: ")
-                    
-                    if choice == "1":
-                        passenger.name = input(f"Nome atual: {passenger.name}\nNovo nome: ")
-                    elif choice == "2":
-                        passenger.age = int(input(f"Idade atual: {passenger.age}\nNova idade: "))
-                    elif choice == "3":
-                        new_gender_choice = input(f"Gênero atual: {passenger.gender}\nNovo gênero (M/F/O): ").lower()
-                        if new_gender_choice == 'm':
-                            passenger.gender = 'Masculino'
-                        elif new_gender_choice == 'f':
-                            passenger.gender = 'Feminino'
-                        elif new_gender_choice == 'o':
-                            passenger.gender = 'Outro'
-                        else:
-                            print("Gênero inválido.\n")
-                            continue
-                    elif choice == "4":
-                        passenger.nationality = input(f"Nacionalidade atual: {passenger.nationality}\nNova nacionalidade: ")
-                    elif choice == "5":
-                        passenger.passport_number = input(f"Número do passaporte atual: {passenger.passport_number}\nNovo número do passaporte: ")
-                    elif choice == "6":
-                        print("Passageiro atualizado com sucesso!\n")
-                        return
-                    else:
-                        print("Opção inválida!")
-        print("Passageiro não encontrado.\n")
+                return passenger
+        return None
 
+    def update_name(self, passenger):
+        new_name = input(f"Nome atual: {passenger.name}\nNovo nome: ")
+        passenger.name = new_name
+
+    def update_age(self, passenger):
+        while True:
+            try:
+                new_age = int(input(f"Idade atual: {passenger.age}\nNova idade: "))
+                if new_age < 0:
+                    print("Idade não pode ser negativa.")
+                else:
+                    passenger.age = new_age
+                    break
+            except ValueError:
+                print("Por favor, insira um número válido para a idade.")
+
+    def update_gender(self, passenger):
+        gender_choice = input(f"Gênero atual: {passenger.gender}\nNovo gênero (M/F/O): ").lower()
+        gender_map = {'m': 'Masculino', 'f': 'Feminino', 'o': 'Outro'}
+        gender = gender_map.get(gender_choice)
+
+        if gender:
+            passenger.gender = gender
+        else:
+            print("Gênero inválido.\n")
+
+    def update_nationality(self, passenger):
+        new_nationality = input(f"Nacionalidade atual: {passenger.nationality}\nNova nacionalidade: ")
+        passenger.nationality = new_nationality
+
+    def update_passport_number(self, passenger):
+        while True:
+            new_passport_number = input(f"Número de passaporte atual: {passenger.passport_number}\nNovo número do passaporte (8 ou 9 dígitos): ")
+            if new_passport_number.isdigit() and len(new_passport_number) in [8, 9]:
+                passenger.passport_number = new_passport_number
+                break
+            print("Número de passaporte inválido! Deve ter 8 ou 9 dígitos.")
 
     def remove_passenger(self):
         passenger_id = int(input("ID do passageiro a remover: "))
