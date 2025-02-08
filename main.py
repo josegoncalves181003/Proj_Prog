@@ -114,7 +114,6 @@ class PassengerManager:
             print("Passageiro não encontrado.\n")
 
     def find_passenger_by_id(self, passenger_id):
-        # Helper function to find passenger by ID
         for passenger in self.passengers:
             if passenger.passenger_id == passenger_id:
                 return passenger
@@ -159,7 +158,11 @@ class PassengerManager:
             print("Número de passaporte inválido! Deve ter 8 ou 9 dígitos.")
 
     def remove_passenger(self):
-        passenger_id = int(input("ID do passageiro a remover: "))
+        try:
+            passenger_id = int(input("ID do passageiro a remover: "))
+        except ValueError:
+            print("ID inválido! Deve ser um número inteiro.\n")
+            return
         for passenger in self.passengers:
             if passenger.passenger_id == passenger_id:
                 self.passengers.remove(passenger)
