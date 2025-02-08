@@ -20,8 +20,8 @@ class Passenger:
     def assign_seat(self, seat_number):
         self.seat_number = seat_number
 
-    def update_ticket_status(self, status):
-        self.ticket_status = status
+    def update_ticket_status(self, ticket_status):
+        self.ticket_status = ticket_status
 
     def check_in(self, baggage_weight):
         self.checked_in = True
@@ -66,30 +66,55 @@ class PassengerManager:
         else:
             print("\nLista de Passageiros:")
             for passenger in self.passengers:
-                print(passenger)
+                print(f"ID: {passenger.passenger_id} | Nome: {passenger.name} | Status: {passenger.ticket_status}")
             print()
 
-    def update_passenger(self, passenger_id, new_flight_id=None, new_seat_number=None, new_status=None, check_in=False, baggage_weight=None):
+    def update_passenger(self):
+        passenger_id = int(input("ID do Passageiro para atualizar: "))
         for passenger in self.passengers:
             if passenger.passenger_id == passenger_id:
-                if new_flight_id:
-                    passenger.assign_flight(new_flight_id)
-                if new_seat_number:
-                    passenger.assign_seat(new_seat_number)
-                if new_status:
-                    passenger.update_ticket_status(new_status)
-                if check_in and baggage_weight is not None:
-                    passenger.check_in(baggage_weight)
-                print(f"Passageiro {passenger_id} atualizado com sucesso!\n")
-                return
+                while True:
+                    print("\n1. Atualizar nome")
+                    print("2. Atualizar idade")
+                    print("3. Atualizar gênero")
+                    print("4. Atualizar nacionalidade")
+                    print("5. Atualizar número do passaporte")
+                    print("6. Concluir atualização")
+                    choice = input("Escolha uma opção: ")
+                    
+                    if choice == "1":
+                        passenger.name = input(f"Nome atual: {passenger.name}\nNovo nome: ")
+                    elif choice == "2":
+                        passenger.age = int(input(f"Idade atual: {passenger.age}\nNova idade: "))
+                    elif choice == "3":
+                        new_gender_choice = input(f"Gênero atual: {passenger.gender}\nNovo gênero (M/F/O): ").lower()
+                        if new_gender_choice == 'm':
+                            passenger.gender = 'Masculino'
+                        elif new_gender_choice == 'f':
+                            passenger.gender = 'Feminino'
+                        elif new_gender_choice == 'o':
+                            passenger.gender = 'Outro'
+                        else:
+                            print("Gênero inválido.\n")
+                            continue
+                    elif choice == "4":
+                        passenger.nationality = input(f"Nacionalidade atual: {passenger.nationality}\nNova nacionalidade: ")
+                    elif choice == "5":
+                        passenger.passport_number = input(f"Número do passaporte atual: {passenger.passport_number}\nNovo número do passaporte: ")
+                    elif choice == "6":
+                        print("Passageiro atualizado com sucesso!\n")
+                        return
+                    else:
+                        print("Opção inválida!")
         print("Passageiro não encontrado.\n")
 
-    def remove_passenger(self,name):
+
+    def remove_passenger(self):
         passenger_id = int(input("ID do passageiro a remover: "))
         for passenger in self.passengers:
             if passenger.passenger_id == passenger_id:
                 self.passengers.remove(passenger)
-                print(f"Passageiro {name}(ID:{passenger_id}), removido com sucesso!\n")
+                print(f"Passageiro {passenger.name}(ID:{passenger_id}), removido com sucesso!\n")
                 return
         print("Passageiro não encontrado.\n")
         
@@ -102,8 +127,9 @@ def menu():
         print("\nSistema de Gestão de Passageiros")
         print("1. Adicionar Passageiro")
         print("2. Listar Passageiros")
-        print("3. Remover Passageiro")
-        print("4. Sair")
+        print("3. Atualizar Passageiro")
+        print("4. Remover Passageiro")
+        print("5. Sair")
         
         choice = input("Escolha uma opção: ")
         
@@ -113,8 +139,10 @@ def menu():
             manager.list_passengers()
             press_enter_to_continue()
         elif choice == "3":
-            manager.remove_passenger()
+            manager.update_passenger()
         elif choice == "4":
+            manager.remove_passenger()
+        elif choice == "5":
             print("Saindo do sistema...")
             break
         else:
