@@ -37,17 +37,27 @@ class Passenger:
 class PassengerManager:
     def __init__(self):
         self.passengers = []
+        self.id_counter = 1
 
     def add_passenger(self):
-        passenger_id = int(input("ID do passageiro: "))
         name = input("Nome do passageiro: ")
         age = int(input("Idade do passageiro: "))
-        gender = input("Gênero do passageiro: ")
+        gender_choice = input("Gênero do passageiro (M/F/O): ").lower()
+        if gender_choice == 'm':
+            gender = 'Masculino'
+        elif gender_choice == 'f':
+            gender = 'Feminino'
+        elif gender_choice == 'o':
+            gender = 'Outro'
+        else:
+            print("Gênero inválido.\n")
+            return
         nationality = input("Nacionalidade do passageiro: ")
         passport_number = input("Número do passaporte: ")
         
-        passenger = Passenger(passenger_id, name, age, gender, nationality, passport_number)
+        passenger = Passenger(self.id_counter, name, age, gender, nationality, passport_number)
         self.passengers.append(passenger)
+        self.id_counter += 1
         print(f"Passageiro {passenger.name} adicionado com sucesso!\n")
 
     def list_passengers(self):
@@ -74,12 +84,12 @@ class PassengerManager:
                 return
         print("Passageiro não encontrado.\n")
 
-    def remove_passenger(self):
-        passenger_id = int(input("ID do passageiro a removee: "))
+    def remove_passenger(self,name):
+        passenger_id = int(input("ID do passageiro a remover: "))
         for passenger in self.passengers:
             if passenger.passenger_id == passenger_id:
                 self.passengers.remove(passenger)
-                print(f"Passageiro {passenger_id} removido com sucesso!\n")
+                print(f"Passageiro {name}(ID:{passenger_id}), removido com sucesso!\n")
                 return
         print("Passageiro não encontrado.\n")
         
@@ -101,6 +111,7 @@ def menu():
             manager.add_passenger()
         elif choice == "2":
             manager.list_passengers()
+            press_enter_to_continue()
         elif choice == "3":
             manager.remove_passenger()
         elif choice == "4":
