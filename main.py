@@ -60,13 +60,17 @@ class PassengerManager:
         while True:
             passport_number = input("Número do passaporte (8 ou 9 dígitos): ")
             if passport_number.isdigit() and len(passport_number) in [8, 9]:
-                break
-            print("Número de passaporte inválido! Deve ter 8 ou 9 dígitos.")
-        
+                if self.check_duplicate_passport(passport_number):
+                    print(f"Erro: Já existe um passageiro com o número de passaporte {passport_number}.\n")
+                else:
+                    break
+            else:
+                print("Número de passaporte inválido! Deve ter 8 ou 9 dígitos.")
+            
         passenger = Passenger(self.id_counter, name, age, gender, nationality, passport_number)
         self.passengers.append(passenger)
         self.id_counter += 1
-        print(f"Passageiro {passenger.name} adicionado com sucesso!\n")
+        print(f"Passageiro {passenger.name} (ID: {passenger.passenger_id}) adicionado com sucesso!\n")
 
     def list_passengers(self):
         if not self.passengers:
@@ -86,6 +90,7 @@ class PassengerManager:
         passenger = self.find_passenger_by_id(passenger_id)
 
         if passenger:
+            print(f"Passageiro {passenger.name} encontrado.\nO que deseja atualizar?")
             while True:
                 print("\n1. Atualizar nome")
                 print("2. Atualizar idade")
@@ -106,7 +111,7 @@ class PassengerManager:
                 elif choice == "5":
                     self.update_passport_number(passenger)
                 elif choice == "6":
-                    print("Passageiro atualizado com sucesso!\n")
+                    print(f"Passageiro {passenger.name} atualizado com sucesso!\n")
                     return
                 else:
                     print("Opção inválida!")
@@ -170,6 +175,95 @@ class PassengerManager:
                 return
         print("Passageiro não encontrado.\n")
         
+    def search_passenger(self):
+        print("\nPesquisar Passageiro")
+        print("1. Pesquisar por ID")
+        print("2. Pesquisar por Nome")
+        print("3. Pesquisar por Número de Passaporte")
+
+        choice = input("Escolha uma opção: ")
+
+        if choice == "1":
+            try:
+                passenger_id = int(input("Digite o ID do passageiro: "))
+                found = [p for p in self.passengers if p.passenger_id == passenger_id]
+            except ValueError:
+                print("ID inválido! Deve ser um número inteiro.\n")
+                return
+
+        elif choice == "2":
+            name = input("Digite o nome do passageiro: ").strip().lower()
+            found = [p for p in self.passengers if p.name.lower() == name]
+
+        elif choice == "3":
+            passport_number = input("Digite o número do passaporte: ").strip()
+            found = [p for p in self.passengers if p.passport_number == passport_number]
+
+        else:
+            print("Opção inválida!")
+            return
+
+        if found:
+            print("\nPassageiro(s) encontrado(s):")
+            for passenger in found:
+                print(passenger)
+        else:
+            print("Nenhum passageiro encontrado com esses dados.\n")
+        
+    def check_in_passenger(self):
+        try:
+            passenger_id = int(input("ID do Passageiro para check-in: "))
+        except ValueError:
+            print("ID inválido! Deve ser um número inteiro.\n")
+            return
+
+        passenger = self.find_passenger_by_id(passenger_id)
+        if not passenger:
+            print("Passageiro não encontrado.\n")
+            return
+
+        if passenger.checked_in:
+            print("Passageiro já realizou o check-in.\n")
+            return
+
+        while True:
+            try:
+                weight = float(input("Peso da bagagem (kg): "))
+                if weight <= 0:
+                    print("Erro: O peso deve ser um valor positivo.")
+                    continue
+                break
+            except ValueError:
+                print("Entrada inválida! Certifique-se de inserir um número válido para o peso.")
+
+        while True:
+            try:
+                length = float(input("Comprimento da bagagem (cm): "))
+                width = float(input("Largura da bagagem (cm): "))
+                height = float(input("Altura da bagagem (cm): "))
+                if length <= 0 or width <= 0 or height <= 0:
+                    print("Erro: As dimensões devem ser valores positivos.")
+                    continue
+                break
+            except ValueError:
+                print("Entrada inválida! Certifique-se de inserir números válidos para as dimensões.")
+    
+    def check_duplicate_passport(self, passport_number):
+        return any(p.passport_number == passport_number for p in self.passengers)
+    
+    def check_luggage_size(self, weight,length, width, height):
+        MAX_WEIGHT = 23
+        MAX_TOTAL_SIZE = 158
+        
+        total_size = length + width + height
+        if weight > MAX_WEIGHT:
+            print(f"Erro: Peso da bagagem ultrapassa o limite máximo de {MAX_WEIGHT} kg.\nCheck-in negado!")
+            return False
+        if total_size > MAX_TOTAL_SIZE:
+            print(f"Erro: Tamanho total da bagagem ultrapassa o limite máximo de {MAX_TOTAL_SIZE} cm.\nCheck-in negado!")
+            return False
+        return True
+        
 def press_enter_to_continue():
     input("\nPressione ENTER para continuar...")
     
@@ -177,11 +271,13 @@ def menu():
     manager = PassengerManager()
     while True:
         print("\nSistema de Gestão de Passageiros")
-        print("1. Adicionar Passageiro")
-        print("2. Listar Passageiros")
-        print("3. Atualizar Passageiro")
-        print("4. Remover Passageiro")
-        print("5. Sair")
+        print("1. Adicionar passageiro")
+        print("2. Listar todos os passageiros")
+        print("3. Atualizar dados o passageiro")
+        print("4. Remover passageiro")
+        print("5. Pesquisar passageiro")
+        print("6. Check-in de passageiro")
+        print("7. Sair")
         
         choice = input("Escolha uma opção: ")
         
@@ -195,6 +291,12 @@ def menu():
         elif choice == "4":
             manager.remove_passenger()
         elif choice == "5":
+            manager.search_passenger()
+            press_enter_to_continue()
+        elif choice == "6":
+            manager.check_in_passenger()
+            press_enter_to_continue()
+        elif choice == "7":
             print("Saindo do sistema...")
             break
         else:
