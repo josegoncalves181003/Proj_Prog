@@ -86,6 +86,119 @@ class FlightManager:
                 return value
             except ValueError:
                 print("Entrada inválida! Insira um número inteiro.\n")
+class Plane:
+    def __init__(self, model_name, plane_id, executive_seats, business_seats, economy_seats):
+        self.model_name = model_name
+        self.plane_id = plane_id
+        self.executive_seats = executive_seats
+        self.business_seats = business_seats
+        self.economy_seats = economy_seats
+        self.total_seats = executive_seats + business_seats + economy_seats
+
+    def __str__(self):
+        return (f"Plane ID: {self.plane_id} | Model: {self.model_name} | "
+                f"Executive Seats: {self.executive_seats} | Business Seats: {self.business_seats} | "
+                f"Economy Seats: {self.economy_seats} | Total Seats: {self.total_seats}")
+    
+    def get_seat_distribution(self):
+        return {
+            "Executive": self.executive_seats,
+            "Business": self.business_seats,
+            "Economy": self.economy_seats,
+            "Total": self.total_seats
+        }
+
+class PlaneManager:
+    def __init__(self):
+        self.planes = []
+        self.id_counter = 1
+    
+    def create_plane(self):
+        model_name = input("Enter the plane model name: ")
+        try:
+            executive_seats = int(input("Enter the number of executive seats: "))
+            business_seats = int(input("Enter the number of business seats: "))
+            economy_seats = int(input("Enter the number of economy seats: "))
+        except ValueError:
+            print("Please enter valid numbers for seats.\n")
+            return
+        
+        plane = Plane(model_name, self.id_counter, executive_seats, business_seats, economy_seats)
+        self.planes.append(plane)
+        self.id_counter += 1
+        print(f"Plane {model_name} added successfully with ID {plane.plane_id}.\n")
+    
+    def remove_plane(self):
+        try:
+            plane_id = int(input("Enter the plane ID to remove: "))
+        except ValueError:
+            print("ID must be an integer.\n")
+            return
+        
+        plane = self.find_plane_by_id(plane_id)
+        if plane:
+            self.planes.remove(plane)
+            print(f"Plane {plane.model_name} (ID: {plane.plane_id}) removed successfully.\n")
+        else:
+            print("Plane not found.\n")
+    
+    def update_plane(self):
+        try:
+            plane_id = int(input("Enter the plane ID to update: "))
+        except ValueError:
+            print("ID must be an integer.\n")
+            return
+        
+        plane = self.find_plane_by_id(plane_id)
+        if plane:
+            print("\nUpdate Plane Details")
+            print("1. Update Executive Seats")
+            print("2. Update Business Seats")
+            print("3. Update Economy Seats")
+            print("4. Cancel Update")
+            choice = input("Choose an option: ")
+            
+            if choice == "1":
+                try:
+                    new_executive_seats = int(input(f"Current Executive Seats: {plane.executive_seats}\nNew Executive Seats: "))
+                    plane.executive_seats = new_executive_seats
+                except ValueError:
+                    print("Please enter a valid number for seats.\n")
+            elif choice == "2":
+                try:
+                    new_business_seats = int(input(f"Current Business Seats: {plane.business_seats}\nNew Business Seats: "))
+                    plane.business_seats = new_business_seats
+                except ValueError:
+                    print("Please enter a valid number for seats.\n")
+            elif choice == "3":
+                try:
+                    new_economy_seats = int(input(f"Current Economy Seats: {plane.economy_seats}\nNew Economy Seats: "))
+                    plane.economy_seats = new_economy_seats
+                except ValueError:
+                    print("Please enter a valid number for seats.\n")
+            elif choice == "4":
+                print("Update canceled.\n")
+            else:
+                print("Invalid option.\n")
+            
+            plane.total_seats = plane.executive_seats + plane.business_seats + plane.economy_seats
+            print(f"Updated plane details: {plane}\n")
+        else:
+            print("Plane not found.\n")
+    
+    def list_planes(self):
+        if not self.planes:
+            print("No planes available.\n")
+        else:
+            print("\nList of Planes:")
+            for plane in self.planes:
+                print(plane)
+    
+    def find_plane_by_id(self, plane_id):
+        for plane in self.planes:
+            if plane.plane_id == plane_id:
+                return plane
+        return None
 
 class Passenger:
     def __init__(self, passenger_id, name, age, gender, nationality, passport_number, ticket_status="Pending"):
@@ -373,8 +486,8 @@ class PassengerManager:
 def press_enter_to_continue():
     input("\nPressione ENTER para continuar...")
     
-def menu():
-    manager = PassengerManager()
+def passenger_menu():
+    passenger_manager = PassengerManager()
     while True:
         print("\nSistema de Gestão de Passageiros")
         print("1. Adicionar passageiro")
@@ -383,30 +496,110 @@ def menu():
         print("4. Remover passageiro")
         print("5. Pesquisar passageiro")
         print("6. Check-in de passageiro")
-        print("7. Sair")
+        print("7. Voltar ao menu principal")
         
         choice = input("Escolha uma opção: ")
         
         if choice == "1":
-            manager.add_passenger()
+            passenger_manager.add_passenger()
         elif choice == "2":
-            manager.list_passengers()
+            passenger_manager.list_passengers()
             press_enter_to_continue()
         elif choice == "3":
-            manager.update_passenger()
+            passenger_manager.update_passenger()
         elif choice == "4":
-            manager.remove_passenger()
+            passenger_manager.remove_passenger()
         elif choice == "5":
-            manager.search_passenger()
+            passenger_manager.search_passenger()
             press_enter_to_continue()
         elif choice == "6":
-            manager.check_in_passenger()
+            passenger_manager.check_in_passenger()
             press_enter_to_continue()
         elif choice == "7":
             print("Saindo do sistema...")
             break
         else:
             print("Opção inválida! Tente novamente.")
+            
+def plane_menu():
+    plane_manager = PlaneManager()
+    
+    while True:
+        print("\nGestão de aviões")
+        print("1. Adicionar um avião")
+        print("2. Remover um avião")
+        print("3. Atualizar um avião")
+        print("4. Listar todos os aviões")
+        print("5. Regressar ao menu principal")
+        
+        choice = input("Escolha uma opção: ")
+        
+        if choice == "1":
+            plane_manager.create_plane()
+        elif choice == "2":
+            plane_manager.remove_plane()
+        elif choice == "3":
+            plane_manager.update_plane()
+        elif choice == "4":
+            plane_manager.list_planes()
+        elif choice == "5":
+            print("Regressando ao menu principal....")
+            break
+        else:
+            print("Opção invalida. Tente novamente.")
+            
+def flight_menu():
+    flight_manager = FlightManager()
+    
+    while True:
+        print("\nGestão de voos")
+        print("1. Criar voo")
+        print("2. Listar todos os voos")
+        print("3. Atualizar estado do voo")
+        print("4. Apagar voo")
+        print("5. Regressar ao menu principal.")
+        
+        choice = input("Escolha uma opção: ")
+        
+        if choice == "1":
+            flight_manager.add_flight()
+            press_enter_to_continue()
+        elif choice == "2":
+            flight_manager.list_flights()
+            press_enter_to_continue()
+        elif choice == "3":
+            flight_manager.update_flight_status()
+            press_enter_to_continue()
+        elif choice == "4":
+            flight_manager.remove_flight()
+            press_enter_to_continue()
+        elif choice == "5":
+            print("Regressando ao menu principal...")
+            break
+        else:
+            print("Opção invalida. Tente novamente.")
+            
+def main_menu():
+    while True:
+        print("\nSistema de gestão aeroportuária")
+        print("1. Gestão de passageiros")
+        print("2. Gestão de aviões")
+        print("3. Gestão de voos")
+        print("4. Sair")
+        
+        choice = input("Escolha uma opção: ")
+        
+        if choice == "1":
+            passenger_menu()
+        elif choice == "2":
+            plane_menu()
+        elif choice == "3":
+            flight_menu()
+        elif choice == "4":
+            print("Fechando o programa...")
+            break
+        else:
+            print("Opção invalida. Tente novamente.")
 
 if __name__ == "__main__":
-    menu()
+    main_menu()
