@@ -1,4 +1,29 @@
 # -*- coding: utf-8 -*-
+import json
+
+class Flight:
+    def __init__(self, flight_id, destination, departure_time, arrival_time, plane, available_seats, status="On Time"):
+        self.flight_id = flight_id
+        self.destination = destination
+        self.departure_time = departure_time
+        self.arrival_time = arrival_time
+        self.plane = plane
+        self.available_seats = available_seats
+        self.status = status
+
+    def update_status(self, new_status):
+        self.status = new_status
+
+    def reserve_seat(self):
+        if self.available_seats > 0:
+            self.available_seats -= 1
+            return True
+        return False
+
+    def __str__(self):
+        return (f"Voo {self.flight_id} | Destino: {self.destination} | "
+                f"Partida: {self.departure_time} | Chegada: {self.arrival_time} | "
+                f"Lugares Disponíveis: {self.available_seats} | Status: {self.status}")
 
 class Passenger:
     def __init__(self, passenger_id, name, age, gender, nationality, passport_number, ticket_status="Pending"):
@@ -38,6 +63,22 @@ class PassengerManager:
     def __init__(self):
         self.passengers = []
         self.id_counter = 1
+        self.filepath = "passenger.json"
+        self.load_passengers()
+        
+    def save_passengers(self):
+        with open(self.file_path, "w") as file:
+            json.dump([vars(p) for p in self.passengers], file, indent=4)
+            
+    def load_passengers(self):
+        try:
+            with open(self.file_path, "r") as file:
+                data = json.load(file)
+                self.passengers = [Passenger(**p) for p in data]
+                if self.passengers:
+                    self.id_counter = max(p.passenger_id for p in self.passengers) + 1
+        except (FileNotFoundError, json.JSONDecodeError):
+            self.passengers = []
 
     def add_passenger(self):
         name = input("Nome do passageiro: ")
@@ -70,6 +111,7 @@ class PassengerManager:
         passenger = Passenger(self.id_counter, name, age, gender, nationality, passport_number)
         self.passengers.append(passenger)
         self.id_counter += 1
+        self.save_passengers()
         print(f"Passageiro {passenger.name} (ID: {passenger.passenger_id}) adicionado com sucesso!\n")
 
     def list_passengers(self):
@@ -111,6 +153,7 @@ class PassengerManager:
                 elif choice == "5":
                     self.update_passport_number(passenger)
                 elif choice == "6":
+                    self.save_passengers(passenger)
                     print(f"Passageiro {passenger.name} atualizado com sucesso!\n")
                     return
                 else:
@@ -171,6 +214,7 @@ class PassengerManager:
         for passenger in self.passengers:
             if passenger.passenger_id == passenger_id:
                 self.passengers.remove(passenger)
+                self.save_passengers()
                 print(f"Passageiro {passenger.name}(ID:{passenger_id}), removido com sucesso!\n")
                 return
         print("Passageiro não encontrado.\n")
