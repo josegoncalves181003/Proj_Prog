@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import os
 
 class Flight:
     def __init__(self, flight_id, destination, departure_time, arrival_time, plane, status = "Scheduled", available_seats = None):
@@ -160,6 +161,7 @@ class Plane:
         self.business_seats = business_seats
         self.economy_seats = economy_seats
         self.total_seats = executive_seats + business_seats + economy_seats
+        
 
     def __str__(self):
         return (f"ID do Avião: {self.plane_id} | Modelo: {self.model_name} | "
@@ -173,16 +175,67 @@ class Plane:
             "Classe Econômica": self.economy_seats,
             "Total": self.total_seats
         }
+        
+    def to_dict(self):
+        return {
+            "Modelo": self.model_name,
+            "ID": self.plane_id,
+            "Primeira Classe": self.executive_seats,
+            "Classe Executiva": self.business_seats,
+            "Classe Econômica": self.economy_seats,
+            "Total": self.total_seats
+        }
+    
+    @classmethod
+    def from_dict(cls, data):
+        required_keys = ['model_name', 'plane_id', 'executive_seats', 'business_seats', 'economy_seats']
+        if all(key in data for key in required_keys):
+            return cls(data['model_name'], data['plane_id'], data['executive_seats'], data['business_seats'], data['economy_seats'])
+        else:
+            raise KeyError("Missing required keys in data dictionary")
 
     def get_plane_key(self):
-        # Cria uma chave única para o avião com base no modelo e na distribuição dos assentos
         return (self.model_name, self.executive_seats, self.business_seats, self.economy_seats)
 
 class PlaneManager:
     def __init__(self):
         self.planes = []
         self.id_counter = 1
-        self.plane_type_count = {}  # Dicionário para contar aviões por tipo (modelo + distribuição de assentos)
+        self.plane_type_count = {}
+        self.filename = "planes.json"
+        self.load_planes()
+
+    def save_planes(self):
+        try:
+            with open(self.filename, "w") as file:
+                planes_data = [plane.to_dict() for plane in self.planes]
+                json.dump(planes_data, file, indent=4)
+                print(f"Dados dos aviões salvos com sucesso no arquivo {self.filename}.")
+        except Exception as e:
+            print(f"Erro ao salvar os dados: {e}")
+            
+    def load_planes(self):
+        try:
+            with open(self.filename, "r") as file:
+                planes_data = json.load(file)
+                self.planes = [Plane.from_dict(data) for data in planes_data]
+                if self.planes:
+                    self.id_counter = max(plane.plane_id for plane in self.planes) + 1
+                else:
+                    self.id_counter = 1
+                for plane in self.planes:
+                    plane_key = plane.get_plane_key()
+                    if plane_key in self.plane_type_count:
+                        self.plane_type_count[plane_key] += 1
+                    else:
+                        self.plane_type_count[plane_key] = 1
+        except (FileNotFoundError, json.JSONDecodeError):
+            print("Arquivo de dados dos aviões não encontrado.\n")
+            self.id_counter = 1
+        except KeyError as e:
+            print(f"Erro ao carregar dados dos aviões: {e}")
+            self.planes = []
+            self.id_counter = 1
 
     def create_plane(self):
         model_name = input("Introduza o modelo do avião: ")
@@ -197,11 +250,11 @@ class PlaneManager:
         plane = Plane(model_name, self.id_counter, executive_seats, business_seats, economy_seats)
         plane_key = plane.get_plane_key()
         if plane_key in self.plane_type_count:
-            # Se o avião já existe, incrementa a contagem
             self.plane_type_count[plane_key] += 1
             print(f"Avião já existente com as mesmas características. Foi adicionado mais um avião deste tipo à frota.\n")
         else:
             self.plane_type_count[plane_key] = 1
+            self.save_planes()
             print(f"Avião {model_name} (ID:{plane.plane_id}) adicionado à frota com sucesso.\n")
         
         self.planes.append(plane)
@@ -222,6 +275,7 @@ class PlaneManager:
                 self.plane_type_count[plane_key] -= 1
                 if self.plane_type_count[plane_key] == 0:
                     del self.plane_type_count[plane_key]
+            self.save_planes()
             print(f"Avião {plane.model_name} (ID: {plane.plane_id}) removido com sucesso.\n")
         else:
             print("Avião não encontrado.\n")
@@ -270,6 +324,7 @@ class PlaneManager:
                 print("Opção inválida.\n")
             
             plane.total_seats = plane.executive_seats + plane.business_seats + plane.economy_seats
+            self.save_planes()
             print(f"Avião atualizado: {plane}\n")
         else:
             print("Avião não encontrado.\n")
@@ -280,7 +335,7 @@ class PlaneManager:
         else:
             print("\nListagem de todos os aviões")
             for plane in self.planes:
-                print(f"ID: {plane.plane_id} | Model: {plane.model_name} | Total_seats: {plane.total_seats}")
+                print(f"ID: {plane.plane_id} | Modelo: {plane.model_name} | Total de assentos: {plane.total_seats}")
             print()
     
     def find_plane_by_id(self, plane_id):
@@ -641,7 +696,7 @@ class MenuSystem:
     def __init__(self):
         self.passenger_manager = PassengerManager()
         self.plane_manager = PlaneManager()
-        self.flight_manager = FlightManager()
+        self.flight_manager = FlightManager(self.plane_manager)
 
     def passenger_menu(self):
         while True:
@@ -691,14 +746,19 @@ class MenuSystem:
 
             if choice == "1":
                 self.plane_manager.create_plane()
+                self.press_enter_to_continue()
             elif choice == "2":
                 self.plane_manager.remove_plane()
+                self.press_enter_to_continue()
             elif choice == "3":
                 self.plane_manager.update_plane()
+                self.press_enter_to_continue()
             elif choice == "4":
                 self.plane_manager.list_planes()
+                self.press_enter_to_continue()
             elif choice == "5":
                 self.plane_manager.count_planes_by_type()
+                self.press_enter_to_continue()
             elif choice == "6":
                 print("Regressando ao menu principal....")
                 break
@@ -740,7 +800,7 @@ class MenuSystem:
 
     def main_menu(self):
         while True:
-            print("\nSistema de gestão aeroportuária")
+            print("\nSistema de gestão aeroportuária\n")
             print("1. Gestão de passageiros")
             print("2. Gestão de aviões")
             print("3. Gestão de voos")
@@ -760,6 +820,11 @@ class MenuSystem:
             else:
                 print("Opção inválida. Tente novamente.")
 
+def clear_terminal():
+    if os.name == 'nt':
+        os.system('cls')
+
 if __name__ == "__main__":
+    clear_terminal()
     menu_system = MenuSystem()
     menu_system.main_menu()
