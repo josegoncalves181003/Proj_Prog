@@ -24,6 +24,68 @@ class Flight:
         return (f"Voo {self.flight_id} | Destino: {self.destination} | "
                 f"Partida: {self.departure_time} | Chegada: {self.arrival_time} | "
                 f"Lugares Disponíveis: {self.available_seats} | Status: {self.status}")
+        
+class FlightManager:
+    def __init__(self):
+        self.flights = []
+        self.id_counter = 1
+
+    def add_flight(self):
+        destination = input("Destino do voo: ")
+        departure_time = input("Horário de partida (YYYY-MM-DD HH:MM): ")
+        arrival_time = input("Horário de chegada (YYYY-MM-DD HH:MM): ")
+        available_seats = self.get_valid_integer("Número de assentos disponíveis: ")
+        
+        # Plane class will be implemented later, so we will be using a placeholder
+        plane = "Aeronave"  
+
+        flight = Flight(self.id_counter, destination, departure_time, arrival_time, plane, available_seats)
+        self.flights.append(flight)
+        self.id_counter += 1
+        print(f"Voo {flight.flight_id} adicionado com sucesso!\n")
+
+    def list_flights(self):
+        if not self.flights:
+            print("Nenhum voo cadastrado.\n")
+        else:
+            print("\nLista de Voos:")
+            for flight in self.flights:
+                print(flight)
+            print()
+
+    def find_flight_by_id(self, flight_id):
+        for flight in self.flights:
+            if flight.flight_id == flight_id:
+                return flight
+        return None
+
+    def update_flight_status(self):
+        flight_id = self.get_valid_integer("ID do voo para atualizar o status: ")
+        flight = self.find_flight_by_id(flight_id)
+
+        if flight:
+            new_status = input("Novo status do voo (On Time, Delayed, Canceled): ").strip()
+            flight.update_status(new_status)
+            print(f"Status do voo {flight_id} atualizado para {new_status}.\n")
+        else:
+            print("Voo não encontrado.\n")
+
+    def remove_flight(self):
+        flight_id = self.get_valid_integer("ID do voo a remover: ")
+        for flight in self.flights:
+            if flight.flight_id == flight_id:
+                self.flights.remove(flight)
+                print(f"Voo {flight_id} removido com sucesso!\n")
+                return
+        print("Voo não encontrado.\n")
+
+    def get_valid_integer(self, prompt):
+        while True:
+            try:
+                value = int(input(prompt))
+                return value
+            except ValueError:
+                print("Entrada inválida! Insira um número inteiro.\n")
 
 class Passenger:
     def __init__(self, passenger_id, name, age, gender, nationality, passport_number, ticket_status="Pending"):
