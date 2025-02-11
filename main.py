@@ -2,44 +2,58 @@
 import json
 
 class Flight:
-    def __init__(self, flight_id, destination, departure_time, arrival_time, plane, available_seats, status="On Time"):
+    def __init__(self, flight_id, destination, departure_time, arrival_time, plane):
         self.flight_id = flight_id
         self.destination = destination
         self.departure_time = departure_time
         self.arrival_time = arrival_time
         self.plane = plane
-        self.available_seats = available_seats
-        self.status = status
+        self.status = "Scheduled"
 
-    def update_status(self, new_status):
-        self.status = new_status
+        self.available_seats = {
+            "Primeira Classe": plane.executive_seats,
+            "Classe Executiva": plane.business_seats,
+            "Classe Econômica": plane.economy_seats
+        }
 
-    def reserve_seat(self):
-        if self.available_seats > 0:
-            self.available_seats -= 1
-            return True
-        return False
+    def book_seat(self, seat_class):
+        """Attempts to book a seat in the specified class."""
+        if seat_class in self.available_seats and self.available_seats[seat_class] > 0:
+            self.available_seats[seat_class] -= 1
+            print(f"Reserva confirmada: 1 assento em {seat_class}. Assentos restantes: {self.available_seats[seat_class]}")
+        else:
+            print(f"Erro: Nenhum assento disponível na {seat_class}.")
 
     def __str__(self):
-        return (f"Voo {self.flight_id} | Destino: {self.destination} | "
+        return (f"Voo ID: {self.flight_id} | Destino: {self.destination} | "
                 f"Partida: {self.departure_time} | Chegada: {self.arrival_time} | "
-                f"Lugares Disponíveis: {self.available_seats} | Status: {self.status}")
+                f"Avião: {self.plane.model_name} | Status: {self.status}")
         
 class FlightManager:
-    def __init__(self):
+    def __init__(self, plane_manager):
         self.flights = []
         self.id_counter = 1
+        self.plane_manager = plane_manager
 
     def add_flight(self):
         destination = input("Destino do voo: ")
         departure_time = input("Horário de partida (YYYY-MM-DD HH:MM): ")
         arrival_time = input("Horário de chegada (YYYY-MM-DD HH:MM): ")
-        available_seats = self.get_valid_integer("Número de assentos disponíveis: ")
         
-        # Plane class will be implemented later, so we will be using a placeholder
-        plane = "Aeronave"  
-
-        flight = Flight(self.id_counter, destination, departure_time, arrival_time, plane, available_seats)
+        print("\nAviões disponiveis:")
+        self.plane_manager.list_planes()
+        while True:
+            try:
+                plane_id = int(input("Insira o ID do avião a ser atribuído ao voo: "))
+                plane = self.plane_manager.find_plane_by_id(plane_id)
+                if plane:
+                    break
+                else:
+                    print("Erro: Avião não encontrado. Tente novamente.")
+            except ValueError:
+                print("Erro: Insira um número válido.")
+        
+        flight = Flight(self.id_counter, destination, departure_time, arrival_time, plane)
         self.flights.append(flight)
         self.id_counter += 1
         print(f"Voo {flight.flight_id} adicionado com sucesso!\n")
@@ -50,7 +64,10 @@ class FlightManager:
         else:
             print("\nLista de Voos:")
             for flight in self.flights:
-                print(flight)
+                print(f"ID: {flight.flight_id} | Destino: {flight.destination} | "
+                      f"Partida: {flight.departure_time} | Chegada: {flight.arrival_time} | "
+                      f": {flight.status}")
+                print("\n")
             print()
 
     def find_flight_by_id(self, flight_id):
