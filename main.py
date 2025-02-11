@@ -98,7 +98,7 @@ class Plane:
     def __str__(self):
         return (f"ID do Avião: {self.plane_id} | Modelo: {self.model_name} | "
                 f"Assentos Primeira Classe: {self.executive_seats} | Assentos Classe Executiva: {self.business_seats} | "
-                f"Assentos Classe econômicas: {self.economy_seats} | Total de Assentos: {self.total_seats}")
+                f"Assentos Classe Econômica: {self.economy_seats} | Total de Assentos: {self.total_seats}")
     
     def get_seat_distribution(self):
         return {
@@ -108,26 +108,39 @@ class Plane:
             "Total": self.total_seats
         }
 
+    def get_plane_key(self):
+        # Cria uma chave única para o avião com base no modelo e na distribuição dos assentos
+        return (self.model_name, self.executive_seats, self.business_seats, self.economy_seats)
+
 class PlaneManager:
     def __init__(self):
         self.planes = []
         self.id_counter = 1
-    
+        self.plane_type_count = {}  # Dicionário para contar aviões por tipo (modelo + distribuição de assentos)
+
     def create_plane(self):
-        model_name = input("Introduza o modelo do avião:")
+        model_name = input("Introduza o modelo do avião: ")
         try:
             executive_seats = int(input("Insira o número de assentos de primeira classe: "))
             business_seats = int(input("Insira o número de assentos da classe executiva: "))
             economy_seats = int(input("Insira o número de assentos da classe econômica: "))
         except ValueError:
-            print("ERRO!Por favor introduza números válidos.\n")
+            print("ERRO! Por favor introduza números válidos.\n")
             return
         
         plane = Plane(model_name, self.id_counter, executive_seats, business_seats, economy_seats)
+        plane_key = plane.get_plane_key()
+        if plane_key in self.plane_type_count:
+            # Se o avião já existe, incrementa a contagem
+            self.plane_type_count[plane_key] += 1
+            print(f"Avião já existente com as mesmas características. Foi adicionado mais um avião deste tipo à frota.\n")
+        else:
+            self.plane_type_count[plane_key] = 1
+            print(f"Avião {model_name} (ID:{plane.plane_id}) adicionado à frota com sucesso.\n")
+        
         self.planes.append(plane)
         self.id_counter += 1
-        print(f"Avião {model_name} (ID:{plane.plane_id}) adicionado à frota com sucesso.\n")
-    
+
     def remove_plane(self):
         try:
             plane_id = int(input("Insira o ID do avião que deseja remover da frota: "))
@@ -138,6 +151,11 @@ class PlaneManager:
         plane = self.find_plane_by_id(plane_id)
         if plane:
             self.planes.remove(plane)
+            plane_key = plane.get_plane_key()
+            if plane_key in self.plane_type_count:
+                self.plane_type_count[plane_key] -= 1
+                if self.plane_type_count[plane_key] == 0:
+                    del self.plane_type_count[plane_key]
             print(f"Avião {plane.model_name} (ID: {plane.plane_id}) removido com sucesso.\n")
         else:
             print("Avião não encontrado.\n")
@@ -167,23 +185,23 @@ class PlaneManager:
                     new_executive_seats = int(input(f"Número atual de assentos de primeira classe: {plane.executive_seats}\nNúmero atualizado de assentos de primeira classe: "))
                     plane.executive_seats = new_executive_seats
                 except ValueError:
-                    print("Introduza um número de assentos valido.\n")
+                    print("Introduza um número de assentos válido.\n")
             elif choice == "3":
                 try:
                     new_business_seats = int(input(f"Número atual de assentos de classe executiva: {plane.business_seats}\nNúmero atualizado de assentos de classe executiva: "))
                     plane.business_seats = new_business_seats
                 except ValueError:
-                    print("Introduza um número de assentos valido.\n")
+                    print("Introduza um número de assentos válido.\n")
             elif choice == "4":
                 try:
                     new_economy_seats = int(input(f"Número atual de assentos de classe econômica: {plane.economy_seats}\nNúmero atualizado de assentos de classe econômica: "))
                     plane.economy_seats = new_economy_seats
                 except ValueError:
-                    print("Introduza um número de assentos valido.\n")
+                    print("Introduza um número de assentos válido.\n")
             elif choice == "5":
                 print("Atualização cancelada.\n")
             else:
-                print("Opção invalida.\n")
+                print("Opção inválida.\n")
             
             plane.total_seats = plane.executive_seats + plane.business_seats + plane.economy_seats
             print(f"Avião atualizado: {plane}\n")
@@ -204,6 +222,11 @@ class PlaneManager:
             if plane.plane_id == plane_id:
                 return plane
         return None
+
+    def count_planes_by_type(self):
+        print("\nContagem de aviões por tipo (modelo + distribuição de assentos):")
+        for plane_key, count in self.plane_type_count.items():
+            print(f"Modelo: {plane_key[0]} | Primeira Classe: {plane_key[1]} | Executiva: {plane_key[2]} | Econômica: {plane_key[3]} | Quantidade: {count}")
 
 class Passenger:
     def __init__(self, passenger_id, name, age, gender, nationality, passport_number, ticket_status="Pending"):
@@ -535,7 +558,8 @@ class MenuSystem:
             print("2. Remover um avião")
             print("3. Atualizar um avião")
             print("4. Listar todos os aviões")
-            print("5. Regressar ao menu principal")
+            print("5. Ver contagem de aviões por tipo")
+            print("6. Regressar ao menu principal")
 
             choice = input("Escolha uma opção: ")
 
@@ -548,10 +572,13 @@ class MenuSystem:
             elif choice == "4":
                 self.plane_manager.list_planes()
             elif choice == "5":
+                self.plane_manager.count_planes_by_type()
+            elif choice == "6":
                 print("Regressando ao menu principal....")
                 break
             else:
                 print("Opção inválida. Tente novamente.")
+
 
     def flight_menu(self):
         while True:
