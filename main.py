@@ -482,124 +482,126 @@ class PassengerManager:
             print(f"Erro: Tamanho total da bagagem ultrapassa o limite máximo de {MAX_TOTAL_SIZE} cm.\nCheck-in negado!")
             return False
         return True
-        
-def press_enter_to_continue():
-    input("\nPressione ENTER para continuar...")
     
-def passenger_menu():
-    passenger_manager = PassengerManager()
-    while True:
-        print("\nSistema de Gestão de Passageiros")
-        print("1. Adicionar passageiro")
-        print("2. Listar todos os passageiros")
-        print("3. Atualizar dados o passageiro")
-        print("4. Remover passageiro")
-        print("5. Pesquisar passageiro")
-        print("6. Check-in de passageiro")
-        print("7. Voltar ao menu principal")
-        
-        choice = input("Escolha uma opção: ")
-        
-        if choice == "1":
-            passenger_manager.add_passenger()
-        elif choice == "2":
-            passenger_manager.list_passengers()
-            press_enter_to_continue()
-        elif choice == "3":
-            passenger_manager.update_passenger()
-        elif choice == "4":
-            passenger_manager.remove_passenger()
-        elif choice == "5":
-            passenger_manager.search_passenger()
-            press_enter_to_continue()
-        elif choice == "6":
-            passenger_manager.check_in_passenger()
-            press_enter_to_continue()
-        elif choice == "7":
-            print("Saindo do sistema...")
-            break
-        else:
-            print("Opção inválida! Tente novamente.")
-            
-def plane_menu():
-    plane_manager = PlaneManager()
-    
-    while True:
-        print("\nGestão de aviões")
-        print("1. Adicionar um avião")
-        print("2. Remover um avião")
-        print("3. Atualizar um avião")
-        print("4. Listar todos os aviões")
-        print("5. Regressar ao menu principal")
-        
-        choice = input("Escolha uma opção: ")
-        
-        if choice == "1":
-            plane_manager.create_plane()
-        elif choice == "2":
-            plane_manager.remove_plane()
-        elif choice == "3":
-            plane_manager.update_plane()
-        elif choice == "4":
-            plane_manager.list_planes()
-        elif choice == "5":
-            print("Regressando ao menu principal....")
-            break
-        else:
-            print("Opção invalida. Tente novamente.")
-            
-def flight_menu():
-    flight_manager = FlightManager()
-    
-    while True:
-        print("\nGestão de voos")
-        print("1. Criar voo")
-        print("2. Listar todos os voos")
-        print("3. Atualizar estado do voo")
-        print("4. Apagar voo")
-        print("5. Regressar ao menu principal.")
-        
-        choice = input("Escolha uma opção: ")
-        
-        if choice == "1":
-            flight_manager.add_flight()
-            press_enter_to_continue()
-        elif choice == "2":
-            flight_manager.list_flights()
-            press_enter_to_continue()
-        elif choice == "3":
-            flight_manager.update_flight_status()
-            press_enter_to_continue()
-        elif choice == "4":
-            flight_manager.remove_flight()
-            press_enter_to_continue()
-        elif choice == "5":
-            print("Regressando ao menu principal...")
-            break
-        else:
-            print("Opção invalida. Tente novamente.")
-            
-def main_menu():
-    while True:
-        print("\nSistema de gestão aeroportuária")
-        print("1. Gestão de passageiros")
-        print("2. Gestão de aviões")
-        print("3. Gestão de voos")
-        print("4. Sair")
-        
-        choice = input("Escolha uma opção: ")
-        
-        if choice == "1":
-            passenger_menu()
-        elif choice == "2":
-            plane_menu()
-        elif choice == "3":
-            flight_menu()
-        elif choice == "4":
-            print("Fechando o programa...")
-            break
-        else:
-            print("Opção invalida. Tente novamente.")
+class MenuSystem:
+    def __init__(self):
+        self.passenger_manager = PassengerManager()
+        self.plane_manager = PlaneManager()
+        self.flight_manager = FlightManager()
+
+    def passenger_menu(self):
+        while True:
+            print("\nSistema de Gestão de Passageiros")
+            print("1. Adicionar passageiro")
+            print("2. Listar todos os passageiros")
+            print("3. Atualizar dados do passageiro")
+            print("4. Remover passageiro")
+            print("5. Pesquisar passageiro")
+            print("6. Check-in de passageiro")
+            print("7. Voltar ao menu principal")
+
+            choice = input("Escolha uma opção: ")
+
+            if choice == "1":
+                self.passenger_manager.add_passenger()
+            elif choice == "2":
+                self.passenger_manager.list_passengers()
+                self.press_enter_to_continue()
+            elif choice == "3":
+                self.passenger_manager.update_passenger()
+            elif choice == "4":
+                self.passenger_manager.remove_passenger()
+            elif choice == "5":
+                self.passenger_manager.search_passenger()
+                self.press_enter_to_continue()
+            elif choice == "6":
+                self.passenger_manager.check_in_passenger()
+                self.press_enter_to_continue()
+            elif choice == "7":
+                print("Saindo do sistema...")
+                break
+            else:
+                print("Opção inválida! Tente novamente.")
+
+    def plane_menu(self):
+        while True:
+            print("\nGestão de aviões")
+            print("1. Adicionar um avião")
+            print("2. Remover um avião")
+            print("3. Atualizar um avião")
+            print("4. Listar todos os aviões")
+            print("5. Regressar ao menu principal")
+
+            choice = input("Escolha uma opção: ")
+
+            if choice == "1":
+                self.plane_manager.create_plane()
+            elif choice == "2":
+                self.plane_manager.remove_plane()
+            elif choice == "3":
+                self.plane_manager.update_plane()
+            elif choice == "4":
+                self.plane_manager.list_planes()
+            elif choice == "5":
+                print("Regressando ao menu principal....")
+                break
+            else:
+                print("Opção inválida. Tente novamente.")
+
+    def flight_menu(self):
+        while True:
+            print("\nGestão de voos")
+            print("1. Criar voo")
+            print("2. Listar todos os voos")
+            print("3. Atualizar estado do voo")
+            print("4. Apagar voo")
+            print("5. Regressar ao menu principal")
+
+            choice = input("Escolha uma opção: ")
+
+            if choice == "1":
+                self.flight_manager.add_flight()
+                self.press_enter_to_continue()
+            elif choice == "2":
+                self.flight_manager.list_flights()
+                self.press_enter_to_continue()
+            elif choice == "3":
+                self.flight_manager.update_flight_status()
+                self.press_enter_to_continue()
+            elif choice == "4":
+                self.flight_manager.remove_flight()
+                self.press_enter_to_continue()
+            elif choice == "5":
+                print("Regressando ao menu principal...")
+                break
+            else:
+                print("Opção inválida. Tente novamente.")
+
+    def press_enter_to_continue(self):
+        input("\nPressione ENTER para continuar...")
+
+    def main_menu(self):
+        while True:
+            print("\nSistema de gestão aeroportuária")
+            print("1. Gestão de passageiros")
+            print("2. Gestão de aviões")
+            print("3. Gestão de voos")
+            print("4. Sair")
+
+            choice = input("Escolha uma opção: ")
+
+            if choice == "1":
+                self.passenger_menu()
+            elif choice == "2":
+                self.plane_menu()
+            elif choice == "3":
+                self.flight_menu()
+            elif choice == "4":
+                print("Fechando o programa...")
+                break
+            else:
+                print("Opção inválida. Tente novamente.")
 
 if __name__ == "__main__":
-    main_menu()
+    menu_system = MenuSystem()
+    menu_system.main_menu()
