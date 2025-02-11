@@ -152,31 +152,35 @@ class PlaneManager:
         plane = self.find_plane_by_id(plane_id)
         if plane:
             print(f"\nAtualizar Avião (ID: {plane.plane_id})")
-            print("1. Atualizar assentos primeira classe")
-            print("2. Atualizar assentos classe executiva")
-            print("3. Atualizar assentos classe econômica")
-            print("4. Cancelar atualização")
+            print("1. Atualizar nome do modelo do avião")
+            print("2. Atualizar assentos primeira classe")
+            print("3. Atualizar assentos classe executiva")
+            print("4. Atualizar assentos classe econômica")
+            print("5. Cancelar atualização")
             choice = input("Escolha uma opção: ")
             
             if choice == "1":
+                new_model_name = input(f"Nome atual do modelo do avião: {plane.model_name}\nNovo nome do modelo do avião: ")
+                plane.model_name = new_model_name
+            elif choice == "2":
                 try:
                     new_executive_seats = int(input(f"Número atual de assentos de primeira classe: {plane.executive_seats}\nNúmero atualizado de assentos de primeira classe: "))
                     plane.executive_seats = new_executive_seats
                 except ValueError:
                     print("Introduza um número de assentos valido.\n")
-            elif choice == "2":
+            elif choice == "3":
                 try:
                     new_business_seats = int(input(f"Número atual de assentos de classe executiva: {plane.business_seats}\nNúmero atualizado de assentos de classe executiva: "))
                     plane.business_seats = new_business_seats
                 except ValueError:
                     print("Introduza um número de assentos valido.\n")
-            elif choice == "3":
+            elif choice == "4":
                 try:
                     new_economy_seats = int(input(f"Número atual de assentos de classe econômica: {plane.economy_seats}\nNúmero atualizado de assentos de classe econômica: "))
                     plane.economy_seats = new_economy_seats
                 except ValueError:
                     print("Introduza um número de assentos valido.\n")
-            elif choice == "4":
+            elif choice == "5":
                 print("Atualização cancelada.\n")
             else:
                 print("Opção invalida.\n")
@@ -192,7 +196,8 @@ class PlaneManager:
         else:
             print("\nListagem de todos os aviões")
             for plane in self.planes:
-                print(plane)
+                print(f"ID: {plane.plane_id} | Model: {plane.model_name} | Total_seats: {plane.total_seats}")
+            print()
     
     def find_plane_by_id(self, plane_id):
         for plane in self.planes:
