@@ -84,7 +84,7 @@ class FlightManager:
         self.id_counter = 1
         self.plane_manager = plane_manager
         self.filename = "flights.json"
-        self.load_flights()
+        #self.load_flights()
         
     def save_flights(self):
         with open(self.filename, "w") as file:
@@ -93,23 +93,17 @@ class FlightManager:
 
     def load_flights(self):
         try:
-            print(f"Loading flights from: {self.filename}")
             with open(self.filename, "r") as file:
                 flights_data = json.load(file)
-                print(f"Loaded flight data: {flights_data}")
-                self.flights = [
-                    Flight.from_dict(data, self.plane_manager) 
-                    for data in flights_data 
-                    if Flight.from_dict(data, self.plane_manager) is not None
-                ]
+                self.flights = [Flight.from_dict(data, self.plane_manager) for data in flights_data if Flight.from_dict(data, self.plane_manager)]
                 
                 if self.flights:
                     self.id_counter = max(flight.flight_id for flight in self.flights) + 1
                 else:
                     self.id_counter = 1
             print(f"{len(self.flights)} voos carregados com sucesso.")
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            print(f"Erro ao carregar voos: {e}")
+        except (FileNotFoundError, json.JSONDecodeError):
+            print("Arquivo de voos não encontrado ou erro de decodificação. Nenhum voo carregado.")
             self.flights = []
 
             
@@ -221,11 +215,13 @@ class Plane:
     
     @classmethod
     def from_dict(cls, data):
-        required_keys = ['model_name', 'plane_id', 'executive_seats', 'business_seats', 'economy_seats']
+        required_keys = ['Modelo', 'ID', 'Primeira Classe', 'Classe Executiva', 'Classe Econômica', 'Total']
         if all(key in data for key in required_keys):
-            return cls(data['model_name'], data['plane_id'], data['executive_seats'], data['business_seats'], data['economy_seats'])
+            return cls(data['Modelo'], data['ID'], data['Primeira Classe'], data['Classe Executiva'], data['Classe Econômica', data['Total']])
         else:
+            print(f"Missing keys in plane data: {data}")  # Debugging line
             raise KeyError("Missing required keys in data dictionary")
+
 
     def get_plane_key(self):
         return (self.model_name, self.executive_seats, self.business_seats, self.economy_seats)
@@ -236,7 +232,7 @@ class PlaneManager:
         self.id_counter = 1
         self.plane_type_count = {}
         self.filename = "planes.json"
-        self.load_planes()
+        #self.load_planes()
 
     def save_planes(self):
         try:
@@ -444,7 +440,7 @@ class PassengerManager:
         self.passengers = []
         self.id_counter = 1
         self.filepath = "passengers.json"
-        self.load_passengers()
+        #self.load_passengers()
         
     def save_passengers(self):
         with open(self.filepath, "w") as file:
@@ -827,6 +823,10 @@ class MenuSystem:
         self.passenger_manager = PassengerManager()
         self.plane_manager = PlaneManager()
         self.flight_manager = FlightManager(self.plane_manager)
+        
+        self.plane_manager.load_planes()
+        self.flight_manager.load_flights()
+        self.passenger_manager.load_passengers()
 
     def passenger_menu(self):
         while True:
