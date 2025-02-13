@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import json
 import os
+import random
+import string
 
 class Flight:
-    def __init__(self, flight_id, destination, departure_time, arrival_time, plane, status = "Scheduled", available_seats = None):
+    def __init__(self, flight_id, destination, departure_time, arrival_time, plane, status = "Agendado", available_seats = None):
         self.flight_id = flight_id
         self.destination = destination
         self.departure_time = departure_time
@@ -21,12 +23,14 @@ class Flight:
             self.available_seats = available_seats
 
     def book_seat(self, seat_class):
-        """Attempts to book a seat in the specified class."""
-        if seat_class in self.available_seats and self.available_seats[seat_class] > 0:
-            self.available_seats[seat_class] -= 1
-            print(f"Reserva confirmada: 1 assento em {seat_class}. Assentos restantes: {self.available_seats[seat_class]}")
+        if seat_class in self.available_seats:
+            if self.available_seats[seat_class] > 0:
+                self.available_seats[seat_class] -= 1
+                print(f"Reserva confirmada: 1 assento em {seat_class}. Assentos restantes: {self.available_seats[seat_class]}")
+            else:
+                print(f"Erro: Nenhum assento disponível na {seat_class}.")
         else:
-            print(f"Erro: Nenhum assento disponível na {seat_class}.")
+            print(f"Erro: Classe de assento {seat_class} inválida.")
             
     def to_dict(self):
         return {
@@ -34,25 +38,40 @@ class Flight:
             "destination": self.destination,
             "departure_time": self.departure_time,
             "arrival_time": self.arrival_time,
-            "plane": self.plane.model_name,
+            "plane_id": self.plane.plane_id,
             "status": self.status,
             "available_seats": self.available_seats
         }
     
     @staticmethod
     def from_dict(data, plane_manager):
-        plane = plane_manager.find_plane_by_id(data["plane"]["plane_id"])
-        if plane:
-            return Flight(
-                flight_id=data["flight_id"],
-                destination=data["destination"],
-                departure_time=data["departure_time"],
-                arrival_time=data["arrival_time"],
-                plane=plane,
-                status=data.get("status", "Scheduled"),
-                available_seats=data.get("available_seats", {})
-            )
-        return None
+        plane = plane_manager.find_plane_by_id(data["plane_id"])
+        if not plane:
+            print(f"Error: Plane with ID {data['plane_id']} not found!")
+            return None
+        
+        if "flight_id" not in data:
+            print(f"Warning: Flight missing 'flight_id' - {data}")
+        if "destination" not in data:
+            print(f"Warning: Flight missing 'destination' - {data}")
+        
+        return Flight(
+            flight_id=data["flight_id"],
+            destination=data["destination"],
+            departure_time=data["departure_time"],
+            arrival_time=data["arrival_time"],
+            plane=plane,
+            status=data.get("status", "Agendado"),
+            available_seats=data.get("available_seats", {})
+        )
+
+    
+    def is_full(self, seat_class):
+        return self.available_seats.get(seat_class, 0) == 0
+    
+    def update_status(self, new_status):
+        self.status = new_status
+        print(f"Status do voo {self.flight_id} atualizado para {self.status}.")
 
     def __str__(self):
         return (f"Voo ID: {self.flight_id} | Destino: {self.destination} | "
@@ -70,17 +89,30 @@ class FlightManager:
     def save_flights(self):
         with open(self.filename, "w") as file:
             json.dump([flight.to_dict() for flight in self.flights], file, indent=4)
+        print("Voos salvos com sucesso!")
 
     def load_flights(self):
         try:
+            print(f"Loading flights from: {self.filename}")
             with open(self.filename, "r") as file:
                 flights_data = json.load(file)
-                self.flights = [Flight.from_dict(data, self.plane_manager) for data in flights_data if Flight.from_dict(data, self.plane_manager)]
+                print(f"Loaded flight data: {flights_data}")
+                self.flights = [
+                    Flight.from_dict(data, self.plane_manager) 
+                    for data in flights_data 
+                    if Flight.from_dict(data, self.plane_manager) is not None
+                ]
+                
                 if self.flights:
                     self.id_counter = max(flight.flight_id for flight in self.flights) + 1
-        except (FileNotFoundError, json.JSONDecodeError):
+                else:
+                    self.id_counter = 1
+            print(f"{len(self.flights)} voos carregados com sucesso.")
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print(f"Erro ao carregar voos: {e}")
             self.flights = []
 
+            
     def add_flight(self):
         destination = input("Destino do voo: ")
         departure_time = input("Horário de partida (YYYY-MM-DD HH:MM): ")
@@ -108,6 +140,7 @@ class FlightManager:
     def list_flights(self):
         if not self.flights:
             print("Nenhum voo cadastrado.\n")
+            return
         else:
             print("\nLista de Voos:")
             for flight in self.flights:
@@ -219,6 +252,7 @@ class PlaneManager:
             with open(self.filename, "r") as file:
                 planes_data = json.load(file)
                 self.planes = [Plane.from_dict(data) for data in planes_data]
+                print(f"Planes loaded successfully: {self.planes}")
                 if self.planes:
                     self.id_counter = max(plane.plane_id for plane in self.planes) + 1
                 else:
@@ -332,6 +366,7 @@ class PlaneManager:
     def list_planes(self):
         if not self.planes:
             print("Não existem aviões.\n")
+            return
         else:
             print("\nListagem de todos os aviões")
             for plane in self.planes:
@@ -348,23 +383,41 @@ class PlaneManager:
         print("\nContagem de aviões por tipo (modelo + distribuição de assentos):")
         for plane_key, count in self.plane_type_count.items():
             print(f"Modelo: {plane_key[0]} | Primeira Classe: {plane_key[1]} | Executiva: {plane_key[2]} | Econômica: {plane_key[3]} | Quantidade: {count}")
+            
+    def create_test_planes(self):
+        test_planes = [
+            ("Airbus A1", 2, 3, 3),  # 8 seats
+            ("Boeing B2", 1, 3, 5),  # 9 seats
+            ("Embraer E3", 2, 2, 3),  # 7 seats
+        ]
+
+        for model, executive, business, economy in test_planes:
+            plane = Plane(model, self.id_counter, executive, business, economy)
+            self.planes.append(plane)
+            self.id_counter += 1
+            self.save_planes()
+
+        print("3 test planes have been created successfully.")
 
 class Passenger:
-    def __init__(self, passenger_id, name, age, gender, nationality, passport_number, ticket_status="Pending"):
+    def __init__(self, passenger_id, name, age, gender, nationality, passport_number, ticket_status="Aguardando", checked_in=False, baggage_weight=0, flight_id=None, seat_class=None, seat_number=None):
         self.passenger_id = passenger_id
         self.name = name
         self.age = age
         self.gender = gender
         self.nationality = nationality
         self.passport_number = passport_number
-        self.checked_in = False
-        self.baggage_weight = 0
+        self.checked_in = checked_in
+        self.baggage_weight = baggage_weight
         self.ticket_status = ticket_status
-        self.flight_id = None
-        self.seat_number = None
-
-    def assign_flight(self, flight_id):
         self.flight_id = flight_id
+        self.seat_class = seat_class
+        self.seat_number = seat_number
+
+    def assign_flight(self, flight_id, seat_class):
+        self.flight_id = flight_id
+        self.seat_class = seat_class
+        self.ticket_status = "Reservado"
 
     def assign_seat(self, seat_number):
         self.seat_number = seat_number
@@ -375,19 +428,22 @@ class Passenger:
     def check_in(self, baggage_weight):
         self.checked_in = True
         self.baggage_weight = baggage_weight
+        self.ticket_status = "Verificado"
 
     def __str__(self):
         return (f"ID: {self.passenger_id} | Nome: {self.name} | Idade: {self.age} | Gênero: {self.gender} | "
                 f"Passaporte: {self.passport_number} | Nacionalidade: {self.nationality} | "
-                f"Voo: {self.flight_id if self.flight_id else 'N/A'} | Assento: {self.seat_number if self.seat_number else 'N/A'} | "
+                f"Voo: {self.flight_id if self.flight_id else 'N/A'} | "
+                f"Assento: {self.seat_number if self.seat_number is not None else 'N/A'} | "
                 f"Status: {self.ticket_status} | Check-in: {'Sim' if self.checked_in else 'Não'} | "
                 f"Peso da Bagagem: {self.baggage_weight}kg")
+
 
 class PassengerManager:
     def __init__(self):
         self.passengers = []
         self.id_counter = 1
-        self.filepath = "passenger.json"
+        self.filepath = "passengers.json"
         self.load_passengers()
         
     def save_passengers(self):
@@ -592,7 +648,6 @@ class PassengerManager:
             print("Erro: Passageiro não encontrado.\n")
             return
 
-        # Verificar se o passageiro já tem um voo reservado
         if passenger.flight_id:
             print(f"Erro: O passageiro {passenger.name} já está reservado no voo {passenger.flight_id}.\n")
             return
@@ -604,7 +659,6 @@ class PassengerManager:
             print("Erro: Voo não encontrado.\n")
             return
 
-        # Exibir assentos disponíveis por classe
         print("\nAssentos disponíveis por classe:")
         for class_name, seats in flight.available_seats.items():
             print(f"{class_name.capitalize()}: {seats} assentos")
@@ -626,7 +680,6 @@ class PassengerManager:
             print(f"Erro: Não há assentos disponíveis na classe {chosen_class.capitalize()}.\n")
             return
 
-        # Atualizar os dados do passageiro e do voo
         passenger.assign_flight(flight_id)
         passenger.update_ticket_status("Confirmado")
         flight.available_seats[chosen_class] -= 1
@@ -692,6 +745,83 @@ class PassengerManager:
     def check_duplicate_passport(self, passport_number):
         return any(p.passport_number == passport_number for p in self.passengers)
     
+    def book_flight(self, flight_manager):
+        passenger_id = input("Digite o ID do passageiro: ")
+
+        if not passenger_id.isdigit():
+            print("Erro: O ID do passageiro deve ser um número.\n")
+            return
+
+        passenger_id = int(passenger_id)
+        passenger = self.find_passenger_by_id(passenger_id)
+
+        if not passenger:
+            print("Erro: Passageiro não encontrado.\n")
+            return
+
+        print("\nListando voos disponíveis:")
+        flight_manager.list_flights()
+        flight_id = input("Introduza o ID do voo que deseja reservar: ")
+
+        flight = flight_manager.find_flight_by_id(flight_id)
+        if not flight:
+            print("Erro: Voo não encontrado.\n")
+            return
+
+        print("\nAssentos disponíveis por classe:")
+        for class_name, seats in flight.available_seats.items():
+            print(f"{class_name.capitalize()}: {seats} assentos")
+
+        class_map = {
+            "1": "Primeira Classe",
+            "2": "Classe Executiva",
+            "3": "Classe Econômica"
+        }
+
+        class_choice = input("Escolha a classe (1 - Primeira Classe, 2 - Executiva, 3 - Econômica): ")
+        chosen_class = class_map.get(class_choice)
+
+        if not chosen_class:
+            print("Erro: Classe inválida.\n")
+            return
+
+        if flight.available_seats[chosen_class] <= 0:
+            print(f"Erro: Não há assentos disponíveis na classe {chosen_class.capitalize()}.\n")
+            return
+
+        passenger.assign_flight(flight_id, chosen_class)
+
+        flight.available_seats[chosen_class] -= 1
+
+        passenger.update_ticket_status("Confirmado")
+        self.save_passengers()
+
+        print(f"Reserva confirmada para {passenger.name} no voo {flight_id} (Classe: {chosen_class.capitalize()}).\n")
+
+    
+    def generate_random_passenger(self):
+        nomes = [
+            "João", "Maria", "Pedro", "Ana", "Carlos", "Sofia", "Miguel", "Beatriz", "Rui", "Joana", 
+            "Tiago", "Marta", "Luís", "Cláudia", "Fernando", "Carla", "Ricardo", "Patrícia", 
+            "Fábio", "Sara", "Nuno", "Francisca", "Gonçalo", "Inês"
+        ]
+        nome = random.choice(nomes) + " " + random.choice(nomes)
+        idade = random.randint(18, 70)
+        genero = random.choice(["Masculino", "Feminino", "Outro"])
+        nacionalidade = "Portugal"
+        numero_passaporte = ''.join(random.choices(string.digits, k=random.choice([8, 9])))
+
+        return nome, idade, genero, nacionalidade, numero_passaporte
+
+    def generate_test_passengers(self, num_passengers=24):
+        for _ in range(num_passengers):
+            nome, idade, genero, nacionalidade, numero_passaporte = self.generate_random_passenger()
+            passageiro = Passenger(self.id_counter, nome, idade, genero, nacionalidade, numero_passaporte)
+            self.passengers.append(passageiro)
+            self.id_counter += 1
+        self.save_passengers()
+        print(f"{num_passengers} passageiros de teste foram gerados com sucesso!")
+        
 class MenuSystem:
     def __init__(self):
         self.passenger_manager = PassengerManager()
@@ -707,7 +837,9 @@ class MenuSystem:
             print("4. Remover passageiro")
             print("5. Pesquisar passageiro")
             print("6. Check-in de passageiro")
-            print("7. Voltar ao menu principal")
+            print("7. Reservar voo")
+            print("8. Voltar ao menu principal")
+            print("0. Gerar Passageiros para teste")
 
             choice = input("Escolha uma opção: ")
 
@@ -727,10 +859,17 @@ class MenuSystem:
                 self.passenger_manager.check_in_passenger()
                 self.press_enter_to_continue()
             elif choice == "7":
+                self.passenger_manager.book_flight(self.flight_manager)  # Pass flight_manager here
+                self.press_enter_to_continue()
+            elif choice == "8":
                 print("Saindo do sistema...")
                 break
+            elif choice == "0":
+                self.passenger_manager.generate_test_passengers()
+                self.press_enter_to_continue()
             else:
                 print("Opção inválida! Tente novamente.")
+
 
     def plane_menu(self):
         while True:
@@ -741,6 +880,7 @@ class MenuSystem:
             print("4. Listar todos os aviões")
             print("5. Ver contagem de aviões por tipo")
             print("6. Regressar ao menu principal")
+            print("0. Criar aviões de teste")
 
             choice = input("Escolha uma opção: ")
 
@@ -762,6 +902,9 @@ class MenuSystem:
             elif choice == "6":
                 print("Regressando ao menu principal....")
                 break
+            elif choice == "0":
+                self.plane_manager.create_test_planes()
+                self.press_enter_to_continue()
             else:
                 print("Opção inválida. Tente novamente.")
 
